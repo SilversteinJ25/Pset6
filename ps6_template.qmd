@@ -1,7 +1,7 @@
 ---
 title: "Problem Set 6 - Waze Shiny Dashboard"
-author: "Peter Ganong, Maggie Shi, and Andre Oviedo"
-date: today
+author: "Justine Silverstein"
+date: idk, due date
 format: 
   pdf:
     include-in-header: 
@@ -81,44 +81,57 @@ import json
 
 ## Data Download and Exploration (20 points){-} 
 
-1. 
+1. Using the zipfile package, unzip the waze_data.zip file. You will find two files in the unzipped folder: waze_data.csv (the whole dataset) and waze_data_sample.csv (a sample of 1% of the data). Load the waze_data_sample.csv file into a pandas DataFrame. What are the variable names and what are their data types? When reporting data types, report using the Altair syntax (e.g., Quantitative, Nominal, etc.). When reporting data types, ignore the columns ts, geo, and geoWKT.
 
 ```{python}
 
 ```
 
-2. 
+2. Now load the waze_data.csv file into a pandas DataFrame. With this file, Create a
+stacked bar chart where the x-axis is each variable and the stacked bar has two categories: the number of observations where that variable is NULL or missing, and the number of observations where they are not. Which variables have the NULL values? Which variable has the highest share of observations that are missing?
 
 ```{python}
 
 ```
 
-3. 
+3. Take a look at the variables type and subtype. Even though they informative, some
+are not aesthetically pleasing, and others are diﬀicult to read. Before going into the
+development of our Shiny Apps, we will create a crosswalk table to help us have cleaner
+data.
 
 ```{python}
 
 ```
 
-4. 
+4. Print the unique values for the columns type and subtype. How many types have a subtype that is NA? Even though we print the combinations for two columns, can you identify which type has subtypes that have enough information to consider that they could have sub-subtypes? Write out a bulleted listed with the values at each layer given this hierarchy. For this list, use names that are clean and readable. For example, using ACCIDENT_MAJOR in the dashboard is not as readable or user-friendly as one menu option that says Accident and then a subsequent one that says Major. Finally, do you consider that we should keep the NA subtypes? Why? If you choose to keep the NA subtypes, code them as “Unclassified.”
 
-1. 
+
+
+
+
+
+We want to assign this newly created hierarchy to the original data. To do so, we will
+create the crosswalk DataFrame and then merge it with the rest of the data.
+
+
+1. To create a crosswalk, define a pandas DataFrame which has five columns: type and subtype from the original dataset, and three new columns updated_type, updated_subtype, and updated_subsubtype.
 ```{python}
 
 ```
 
-2. 
+2. Let each row of this DataFrame be a unique combination of type and subtype. Then, based on the hierarchy you proposed in Q3, fill in updated_type, updated_subtype, and updated_subsubtype accordingly. Remember to name the NA subtypes as “Unclassified”. Hint: your crosswalk should have 32 observations.
 
 ```{python}
 
 ```
 
-3. 
+3. Merge the crosswalk with the original data using type and subtype. How many rows are there for Accident - Unclassified?
 
 ```{python}
 
 ```
 
-4. 
+4. EXTRA CREDIT/OPTIONAL: After merging the crosswalk,can you check that the crosswalk and the new merged dataset have the same values in type and subtype?
 
 ```{python}
 
