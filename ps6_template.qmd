@@ -26,7 +26,7 @@ We use (`*`) to indicate a problem that we think might be time consuming.
 1. "This submission is my work alone and complies with the 30538 integrity
 policy." Add your initials to indicate your agreement: \*\*\_\_\*\*
 2. "I have uploaded the names of anyone I worked with on the problem set **[here](https://docs.google.com/forms/d/185usrCREQaUbvAXpWhChkjghdGgmAZXA3lPWpXLLsts/edit)**"  \*\*\_\_\*\* (2 point)
-3. Late coins used this pset: \*\*\_\_\*\* Late coins left after submission: \*\*\_\_\*\*
+3. Late coins used this pset: 1  Late coins left after submission: 0
 
 4. Before starting the problem set, make sure to read and agree to the terms of data usage for the Waze data [here](https://canvas.uchicago.edu/courses/59054/quizzes/130617).
 
@@ -81,10 +81,16 @@ import json
 
 ## Data Download and Exploration (20 points){-} 
 
-1. Using the zipfile package, unzip the waze_data.zip file. You will find two files in the unzipped folder: waze_data.csv (the whole dataset) and waze_data_sample.csv (a sample of 1% of the data). Load the waze_data_sample.csv file into a pandas DataFrame. What are the variable names and what are their data types? When reporting data types, report using the Altair syntax (e.g., Quantitative, Nominal, etc.). When reporting data types, ignore the columns ts, geo, and geoWKT.
+1. Using the zipfile package, unzip the waze_data.zip file. You will find two files in the unzipped folder: waze_data.csv (the whole dataset) and waze_data_sample.csv (a sample of 1% of the data). Load the waze_data_sample.csv file into a pandas DataFrame. 
+
+What are the variable names and what are their data types? When reporting data types, report using the Altair syntax (e.g., Quantitative, Nominal, etc.). When reporting data types, ignore the columns ts, geo, and geoWKT.
 
 ```{python}
+path = "/Users/justinesilverstein/Desktop/Pset6"
+waze_data = pd.read_csv('waze_data_sample.csv')
 
+print(waze_data.columns)
+print(waze_data.dtypes)
 ```
 
 2. Now load the waze_data.csv file into a pandas DataFrame. With this file, Create a
