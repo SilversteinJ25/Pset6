@@ -43,6 +43,10 @@ policy." Add your initials to indicate your agreement: \*\*\_\_\*\*
 #| echo: true
 #| eval: false
 
+#I did not use the below code chunk, it was unnecessary
+
+file_path ='/Users/justinesilverstein/Desktop/Pset6/basic-app'
+
 def print_file_contents(file_path):
     """Print contents of a file."""
     try:
@@ -73,6 +77,7 @@ import pandas as pd
 from datetime import date
 import numpy as np
 alt.data_transformers.disable_max_rows() 
+from shiny import App, render, ui
 
 import json
 ```
@@ -81,32 +86,80 @@ import json
 
 ## Data Download and Exploration (20 points){-} 
 
-1. Using the zipfile package, unzip the waze_data.zip file. You will find two files in the unzipped folder: waze_data.csv (the whole dataset) and waze_data_sample.csv (a sample of 1% of the data). Load the waze_data_sample.csv file into a pandas DataFrame. 
+1. Using the zipfile package, unzip the waze_data.zip file. You will find two files in the unzipped folder: waze_data.csv (the whole dataset) and waze_data_sample.csv (a sample of 1% of the data). Load the waze_data_sample.csv file into a pandas DataFrame. What are the variable names and what are their data types? When reporting data types, report using the Altair syntax (e.g., Quantitative, Nominal, etc.). When reporting data types, ignore the columns ts, geo, and geoWKT.
 
-What are the variable names and what are their data types? When reporting data types, report using the Altair syntax (e.g., Quantitative, Nominal, etc.). When reporting data types, ignore the columns ts, geo, and geoWKT.
+Using Altair syntax, all the variables are either Quantitative or Nominal. The Nominal variables are city, street, uuid, country, type, and subtype. The Quantitative variabless are confidence, nThumbsUp, roadType, reliability, magvar, and reportRating.
 
 ```{python}
 path = "/Users/justinesilverstein/Desktop/Pset6"
 waze_data = pd.read_csv('waze_data_sample.csv')
+excluded_columns = ['ts', 'geo', 'geoWKT']
+filtered_waze_data = waze_data.drop(columns=excluded_columns)
 
-print(waze_data.columns)
-print(waze_data.dtypes)
+for column, dtype in filtered_data.dtypes.items():
+    if dtype == 'object':
+        print(f"{column}: Nominal")
+    elif dtype == 'int64' or dtype == 'float64':
+        print(f"{column}: Quantitative")
+    elif dtype == 'datetime64[ns]':
+        print(f"{column}: Temporal")
+    else:
+        print(f"{column}: Unknown")
 ```
 
-2. Now load the waze_data.csv file into a pandas DataFrame. With this file, Create a
-stacked bar chart where the x-axis is each variable and the stacked bar has two categories: the number of observations where that variable is NULL or missing, and the number of observations where they are not. Which variables have the NULL values? Which variable has the highest share of observations that are missing?
+2. Now load the waze_data.csv file into a pandas DataFrame. With this file, Create a stacked bar chart where the x-axis is each variable and the stacked bar has two categories: the number of observations where that variable is NULL or missing, and the number of observations where they are not. Which variables have the NULL values? Which variable has the highest share of observations that are missing?
+
+The variables nThumbsUp, street, and subtype all have misisng observations with nThumbsUp having the most missing observations.
 
 ```{python}
+path = "/Users/justinesilverstein/Desktop/Pset6"
+full_waze_data = pd.read_csv('waze_data.csv')
 
+df_counts = pd.DataFrame({
+    'variable': full_waze_data.columns,  
+    'NULL': full_waze_data.isnull().sum().values,    
+    'Non-NULL': full_waze_data.notnull().sum().values 
+})
+
+df_counts_long = df_counts.melt(id_vars='variable', value_vars=['NULL', 'Non-NULL'], var_name='status', value_name='count')
+
+chart = alt.Chart(df_counts_long).mark_bar().encode(
+    x='variable:N',  
+    y='count:Q',  
+    color='status:N',  
+    tooltip=['variable:N', 'status:N', 'count:Q']  
+).properties(
+    title='Count of NULL values per variable'
+)
+
+chart.show()
 ```
 
-3. Take a look at the variables type and subtype. Even though they informative, some
-are not aesthetically pleasing, and others are diﬀicult to read. Before going into the
-development of our Shiny Apps, we will create a crosswalk table to help us have cleaner
+3. Take a look at the variables type and subtype. Even though they are informative, some are not aesthetically pleasing, and others are diﬀicult to read. Before going into the development of our Shiny Apps, we will create a crosswalk table to help us have cleaner
 data.
 
+Print the unique values for the columns type and subtype. How many types have a subtype that is NA? Even though we print the combinations for two columns, can you identify which type has subtypes that have enough information to consider that they could have sub-subtypes? 
+
+Write out a bulleted listed with the values at each layer given this hierarchy. For this list, use names that are clean and readable. For example, using ACCIDENT_MAJOR in the dashboard is not as readable or user-friendly as one menu option that says Accident and then a subsequent one that says Major. 
+
+Finally, do you consider that we should keep the NA subtypes? Why? If you choose to keep the NA subtypes, code them as “Unclassified.”
+
+
 ```{python}
 
+print("Unique values for 'type':")
+print(full_waze_data['type'].unique())
+
+print("\nUnique values for 'subtype':")
+print(full_waze_data['subtype'].unique())
+
+na_subtypes = full_waze_data[full_waze_data['subtype'].isna()]['type'].value_counts()
+print("\nTypes with NA subtypes:")
+print(na_subtypes)
+
+type_subtype_combinations = full_waze_data.groupby(['type', 'subtype']).size().reset_index(name='count')
+print("\nType-Subtype Combinations and their counts:")
+print(type_subtype_combinations)
 ```
 
 4. Print the unique values for the columns type and subtype. How many types have a subtype that is NA? Even though we print the combinations for two columns, can you identify which type has subtypes that have enough information to consider that they could have sub-subtypes? Write out a bulleted listed with the values at each layer given this hierarchy. For this list, use names that are clean and readable. For example, using ACCIDENT_MAJOR in the dashboard is not as readable or user-friendly as one menu option that says Accident and then a subsequent one that says Major. Finally, do you consider that we should keep the NA subtypes? Why? If you choose to keep the NA subtypes, code them as “Unclassified.”
