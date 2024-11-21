@@ -135,14 +135,13 @@ chart = alt.Chart(df_counts_long).mark_bar().encode(
 chart.show()
 ```
 
-3. Take a look at the variables type and subtype. Even though they are informative, some are not aesthetically pleasing, and others are diﬀicult to read. Before going into the development of our Shiny Apps, we will create a crosswalk table to help us have cleaner
-data.
+3. Take a look at the variables type and subtype. Even though they informative, some are not aesthetically pleasing, and others are diﬀicult to read. Before going into the development of our Shiny Apps, we will create a crosswalk table to help us have cleaner data.
 
-Print the unique values for the columns type and subtype. How many types have a subtype that is NA? Even though we print the combinations for two columns, can you identify which type has subtypes that have enough information to consider that they could have sub-subtypes? 
+a. Print the unique values for the columns type and subtype. How many types have a subtype that is NA? Even though we print the combinations for two columns, can you identify which type has subtypes that have enough information to consider that they could have sub-subtypes?
 
-Write out a bulleted listed with the values at each layer given this hierarchy. For this list, use names that are clean and readable. For example, using ACCIDENT_MAJOR in the dashboard is not as readable or user-friendly as one menu option that says Accident and then a subsequent one that says Major. 
+b. Write out a bulleted listed with the values at each layer given this hierarchy. For this list, use names that are clean and readable. For example, using ACCIDENT_MAJOR in the dashboard is not as readable or user-friendly as one menu option that says Accident and then a subsequent one that says Major.
 
-Finally, do you consider that we should keep the NA subtypes? Why? If you choose to keep the NA subtypes, code them as “Unclassified.”
+c. Finally, do you consider that we should keep the NA subt
 
 ```{python}
 print("Unique Types:", full_waze_data['type'].unique())
@@ -202,34 +201,27 @@ for type_name, hierarchy in cleaned_hierarchy.items():
 ```
 
 
-4. Print the unique values for the columns type and subtype. How many types have a subtype that is NA? Even though we print the combinations for two columns, can you identify which type has subtypes that have enough information to consider that they could have sub-subtypes? Write out a bulleted listed with the values at each layer given this hierarchy. For this list, use names that are clean and readable. For example, using ACCIDENT_MAJOR in the dashboard is not as readable or user-friendly as one menu option that says Accident and then a subsequent one that says Major. Finally, do you consider that we should keep the NA subtypes? Why? If you choose to keep the NA subtypes, code them as “Unclassified.”
+4. We want to assign this newly created hierarchy to the original data. To do so, we will create the crosswalk DataFrame and then merge it with the rest of the data.
 
-
-
-
-
-
-We want to assign this newly created hierarchy to the original data. To do so, we will create the crosswalk DataFrame and then merge it with the rest of the data.
-
-
-1. To create a crosswalk, define a pandas DataFrame which has five columns: type and subtype from the original dataset, and three new columns updated_type, updated_subtype, and updated_subsubtype.
+a. To create a crosswalk, define a pandas DataFrame which has five columns: type and subtype from the original dataset, and three new columns updated_type, updated_subtype, and updated_subsubtype.
 ```{python}
 
 ```
 
-2. Let each row of this DataFrame be a unique combination of type and subtype. Then, based on the hierarchy you proposed in Q3, fill in updated_type, updated_subtype, and updated_subsubtype accordingly. Remember to name the NA subtypes as “Unclassified”. Hint: your crosswalk should have 32 observations.
+b. Let each row of this DataFrame be a unique combination of type and subtype. Then, based on the hierarchy you proposed in Q3, fill in updated_type, updated_subtype, and updated_subsubtype accordingly. Remember to name the
+NA subtypes as “Unclassified”. Hint: your crosswalk should have 32 observations.
 
 ```{python}
 
 ```
 
-3. Merge the crosswalk with the original data using type and subtype. How many rows are there for Accident - Unclassified?
+c. Merge the crosswalk with the original data using type and subtype. How many rows are there for Accident - Unclassified?
 
 ```{python}
 
 ```
 
-4. EXTRA CREDIT/OPTIONAL: After merging the crosswalk,can you check that the crosswalk and the new merged dataset have the same values in type and subtype?
+d. EXTRA CREDIT/OPTIONAL: After merging the crosswalk,can you check that the crosswalk and the new merged dataset have the same values in type and subtype?
 
 ```{python}
 
@@ -237,40 +229,48 @@ We want to assign this newly created hierarchy to the original data. To do so, w
 
 
 # App #1: Top Location by Alert Type Dashboard (30 points){-}
+We will first make a spatial dashboard that displays the top 10 locations in Chicago with the highest number of alerts of a chosen type and subtype. Follow the lecture notes on how to create a Basic Shiny app and create it in a new folder called top_alerts_map (Note: remember to choose “No” when prompted to choose if you would like to use Shiny Express). Remember to use reactive decorators (e.g., @reactive_calc) to avoid unnecessary recalculations.
 
-1. 
+1. Let’s begin by by developing our output outside of Shiny. We will first clean and collapse the data.
 
-a. 
+a. The geo variable holds coordinates data, but they are stored in a string that represents the Well-Known Text representation of the point. Create two variables latitude and longitude after extracting the latitude and longitude from the string.
+
+Hint: you will have to use regular expressions or regex to extract your text. You can look at the tutorial on regex here (here (link)) or prompt ChatGPT to put together a regular expression that extracts the coordinates. If you use ChatGPT, copy your prompt ChatGPT’s response below.
+
 ```{python}
 
 ```
 
-b. 
+b. Bin the latitude and longitude variables into bins of step size 0.01. That is, coordinats with values of (-41.9232, -87.4251) should become (-41.92, -87.43). Which binned latitude-longitude combination has the greatest number of observations in the overall dataset?
+
 ```{python}
 
 ```
 
 
-c. 
+c. Collapse the data down to the level of aggregation needed to plot the top 10 latitude-longitude bins with the highest number of alerts for a chosen type and subtype (Note: no sub-subtype). Save DataFrame as top_alerts_map.csv file in the top_alerts_map folder you created. What is the level of aggregation in this case? How many rows does this DataFrame have?
+
 ```{python}
 
 ```
 
-d. 
+2. Using altair, plot a scatter plot where the x-axis is latitude and y-axis is longitude, and the points represent the latitude-longitude bins with the 10 highest number of “Jam- Heavy Traﬀic” alerts. Encode the size of the mark to represent the number of alerts. Hint: for a better presentation of the plot, you should set the domain of the x and y axis to be between some minimum and maximum values for the latitude and longitude.
+
 ```{python}
 
 ```
 
-3. 
+3. Next, we will layer the scatter plot on top of a map of Chicago.
     
-a. 
+a. Download the neighborhood boundaries as a GeoJSON from the Chicago Data Portal (link). EXTRA CREDIT: can you download the file directly with Python using the requests package?
 
 ```{python}
 
 ```
     
 
-b. 
+b. Load it into Python using the json package and prepare it for Altair using the following code:
+
 ```{python}
 # MODIFY ACCORDINGLY
 file_path = "./top_alerts_map/chicago-boundaries.geojson"
@@ -283,36 +283,41 @@ geo_data = alt.Data(values=chicago_geojson["features"])
 
 ```
 
-4. 
+For now on, follow the Altair documentation Altair geographic plots documentation (link) to plot geo_data in Altair. NOTE: Be particularly careful with your choice of the projection (project method) of the map. If you are having trouble with the map showing up correctly, you can try to use the equirectangular projection.
+
+4. Layer the scatter plot from step 2 on top of a plot of the map using the information you loaded in step 3 and geo_data. Adjust the x and y axis domains so that the two layer correctly on top of each other. You may need to change the layering order of the map and the scatter plot or make the map fill transparent in order to properly see both plots.
 
 ```{python}
 
 ```
 
-5. 
+5. Now, we are ready to make our data and plot into the Shiny dashboard. In particular, we’re going to make a dashboard that lets users select in a single dropdown menu which combination of type and subtype they want to display. Once the user has made their selection, the app will show the 10 locations with the highest counts of those alerts.
 
-a. 
+a. For the UI component, create a single dropdown menu for type and subtype. Insert a screenshot of the dropdown menu below. How many total type x subtype combinations are there in your dropdown menu?
 
 ```{python}
 
 ```
 
-b. 
+b. Recreate the “Jam - Heavy Traﬀic” plot from above by using the dropdown menu and insert a screenshot of the graph below.
+
 ```{python}
 
 ```
 
-c. 
+c. Use your dashboard to answer the following question: where are alerts for road closures due to events most common? Insert a screenshot as your answer below.
+
 ```{python}
 
 ```
 
-d. 
+d. Other than the examples above, give an example of a question this dashboard could be used to answer. Formulate the question, take a screenshot of the selection and resulting plot in the dashboard, and then provide the answer.
+
 ```{python}
 
 ```
 
-e. 
+e. Can you suggest adding another column to the dashboard to enhance our analysis?
 
 # App #2: Top Location by Alert Type and Hour Dashboard (20 points) {-}
 
