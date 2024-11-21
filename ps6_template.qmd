@@ -144,23 +144,63 @@ Write out a bulleted listed with the values at each layer given this hierarchy. 
 
 Finally, do you consider that we should keep the NA subtypes? Why? If you choose to keep the NA subtypes, code them as “Unclassified.”
 
+```{python}
+print("Unique Types:", full_waze_data['type'].unique())
+print("Unique Subtypes:", full_waze_data['subtype'].unique())
+
+na_counts = full_waze_data[full_waze_data['subtype'].isna()].groupby('type').size().reset_index(name='NA Count')
+
+types_with_na = na_counts[na_counts['NA Count'] > 0]
+print(f"Number of types with at least one NA subtype: {len(types_with_na)}")
+
+print(full_waze_data.groupby('type')['subtype'].nunique().reset_index(name='Subtype Count'))
+```
 
 ```{python}
-
-print("Unique values for 'type':")
-print(full_waze_data['type'].unique())
-
-print("\nUnique values for 'subtype':")
-print(full_waze_data['subtype'].unique())
-
-na_subtypes = full_waze_data[full_waze_data['subtype'].isna()]['type'].value_counts()
-print("\nTypes with NA subtypes:")
-print(na_subtypes)
-
-type_subtype_combinations = full_waze_data.groupby(['type', 'subtype']).size().reset_index(name='count')
-print("\nType-Subtype Combinations and their counts:")
-print(type_subtype_combinations)
+crosswalk = full_waze_data.groupby('type')['subtype'].unique().reset_index()
+crosswalk.columns = ['Type', 'Subtypes']
+print("Crosswalk table (Type vs. Subtype):")
+print(crosswalk)
 ```
+
+```{python}
+def categorize_subtypes_by_keywords(subtypes, keywords):
+    """Categorize and sort subtypes based on keyword matching."""
+    categorized = {keyword: [] for keyword in keywords}
+    uncategorized = []
+
+    for subtype in subtypes:
+        matched = False
+        for keyword in keywords:
+            if isinstance(subtype, str) and keyword.lower() in subtype.lower():
+                categorized[keyword].append(subtype)
+                matched = True
+                break
+        if not matched:
+            uncategorized.append(subtype)
+    for keyword in categorized:
+        categorized[keyword].sort()
+    return categorized, uncategorized
+
+keywords = ['hazard', 'accident']
+cleaned_hierarchy = {}
+
+for type_name, subtypes in full_waze_data.groupby('type')['subtype']:
+    categorized_subtypes, uncategorized_subtypes = categorize_subtypes_by_keywords(subtypes, keywords)
+    cleaned_hierarchy[type_name] = {
+        "Hazard": categorized_subtypes.get("hazard", []),
+        "Accident": categorized_subtypes.get("accident", []),
+        "Uncategorized": uncategorized_subtypes
+    }
+
+print("Cleaned Hierarchical Structure:")
+for type_name, hierarchy in cleaned_hierarchy.items():
+    print(f"- {type_name}")
+    for category, subtypes in hierarchy.items():
+        print(f"  - {category}: {', '.join(subtypes) if subtypes else 'None'}")
+
+```
+
 
 4. Print the unique values for the columns type and subtype. How many types have a subtype that is NA? Even though we print the combinations for two columns, can you identify which type has subtypes that have enough information to consider that they could have sub-subtypes? Write out a bulleted listed with the values at each layer given this hierarchy. For this list, use names that are clean and readable. For example, using ACCIDENT_MAJOR in the dashboard is not as readable or user-friendly as one menu option that says Accident and then a subsequent one that says Major. Finally, do you consider that we should keep the NA subtypes? Why? If you choose to keep the NA subtypes, code them as “Unclassified.”
 
@@ -169,8 +209,7 @@ print(type_subtype_combinations)
 
 
 
-We want to assign this newly created hierarchy to the original data. To do so, we will
-create the crosswalk DataFrame and then merge it with the rest of the data.
+We want to assign this newly created hierarchy to the original data. To do so, we will create the crosswalk DataFrame and then merge it with the rest of the data.
 
 
 1. To create a crosswalk, define a pandas DataFrame which has five columns: type and subtype from the original dataset, and three new columns updated_type, updated_subtype, and updated_subsubtype.
