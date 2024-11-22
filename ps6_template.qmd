@@ -37,36 +37,6 @@ policy." Add your initials to indicate your agreement: \*\*\_\_\*\*
 
 *Notes: see the [Quarto documentation (link)](https://quarto.org/docs/authoring/figures.html) for directions on inserting images into your knitted document.*
 
-*IMPORTANT: For the App portion of the PS, in case you can not arrive to the expected functional dashboard we will need to take a look at your `app.py` file. You can use the following code chunk template to "import" and print the content of that file. Please, don't forget to also tag the corresponding code chunk as part of your submission!*
-
-```{python}
-#| echo: true
-#| eval: false
-
-#I did not use the below code chunk, it was unnecessary
-
-file_path ='/Users/justinesilverstein/Desktop/Pset6/basic-app'
-
-def print_file_contents(file_path):
-    """Print contents of a file."""
-    try:
-        with open(file_path, 'r') as f:
-            content = f.read()
-            print("```python")
-            print(content)
-            print("```")
-    except FileNotFoundError:
-        print("```python")
-        print(f"Error: File '{file_path}' not found")
-        print("```")
-    except Exception as e:
-        print("```python") 
-        print(f"Error reading file: {e}")
-        print("```")
-
-print_file_contents("./top_alerts_map_byhour/app.py") # Change accordingly
-```
-
 ```{python} 
 #| echo: false
 
@@ -139,7 +109,7 @@ chart.show()
 
 a. Print the unique values for the columns type and subtype. How many types have a subtype that is NA? Even though we print the combinations for two columns, can you identify which type has subtypes that have enough information to consider that they could have sub-subtypes?
 
-Four typess have a subtype with NAs. The subtypes can be seen in the below code's output. Of the four types, Hazard has 19 subtypes, while the others all have less than 5, so it is worth giving it subtypes.
+Four types have a subtype with NAs. The subtypes can be seen in the below code's output. Of the four types, Hazard has 19 subtypes, while the others all have less than 5, so it is worth giving it subtypes.
 
 ```{python}
 print("Unique Types:", full_waze_data['type'].unique())
@@ -151,11 +121,6 @@ types_with_na = na_counts[na_counts['NA Count'] > 0]
 print(f"Number of types with at least one NA subtype: {len(types_with_na)}")
 
 print(full_waze_data.groupby('type')['subtype'].nunique().reset_index(name='Subtype Count'))
-
-crosswalk = full_waze_data.groupby('type')['subtype'].unique().reset_index()
-crosswalk.columns = ['Type', 'Subtypes']
-print("Crosswalk table (Type vs. Subtype):")
-print(crosswalk)
 ```
 
 b. Write out a bulleted listed with the values at each layer given this hierarchy. For this list, use names that are clean and readable. For example, using ACCIDENT_MAJOR in the dashboard is not as readable or user-friendly as one menu option that says Accident and then a subsequent one that says Major.
@@ -165,56 +130,105 @@ def clean_subtypes(row):
     type_prefix = row['type'] + '_'
     subtype = row['subtype']
     if pd.isna(subtype):
-        return None 
+        return 'UNCLASSIFIED'
     if subtype.startswith(type_prefix):
         cleaned_subtype = subtype[len(type_prefix):]  
-    cleaned_subtype = cleaned_subtype.replace('_', ' ')
-    return cleaned_subtype
+        cleaned_subtype = cleaned_subtype.replace('_', ' ')  
+        return cleaned_subtype
+    return subtype
 
-full_waze_data['cleaned_subtype'] = full_waze_data.apply(clean_subtypes, axis=1)
-
-clean_crosswalk = full_waze_data.groupby('type')['cleaned_subtype'].unique().reset_index()
+clean_crosswalk = full_waze_data.groupby('type')['subtype'].unique().reset_index()
 
 for _, row in clean_crosswalk.iterrows():
     print(f"{row['type']}:")
-    for subtype in row['cleaned_subtype']:
-        print(f"  - {subtype}")
+    for subtype in row['subtype']:
+        cleaned_subtype = clean_subtypes({'type': row['type'], 'subtype': subtype})
+        print(f"  - {cleaned_subtype}")
+```
+
+```{python}
+print(clean_crosswalk)
 ```
 
 c. Finally, do you consider that we should keep the NA subtypes Why? If you choose to keep the NA subtypes, code them as “Unclassified.”
 
-In real life, rare events can happen that are not easily classified into premade categories. Or we have labeling issues from person to perrson on how to categorize thingss, so it is left blank. It is a good idea to have an unclassified subtype in such cases.
-
-```{python}
-full_waze_data['cleaned_subtype'] = full_waze_data['cleaned_subtype'].fillna('UNCLASSIFIED')
-
-print(full_waze_data[['type', 'subtype', 'cleaned_subtype']].head())
-```
+We should keep the NA subtypes. In real life, events can happen that are not easily classified into premade categories. Or we have labeling issues from person to person on how to categorize things, so subtype is left blank. It is a good idea to have an unclassified subtype in such cases. The subtype UNCLASSIFIED has been included in the function in the above code chunk.
 
 4. We want to assign this newly created hierarchy to the original data. To do so, we will create the crosswalk DataFrame and then merge it with the rest of the data.
 
 a. To create a crosswalk, define a pandas DataFrame which has five columns: type and subtype from the original dataset, and three new columns updated_type, updated_subtype, and updated_subsubtype.
-```{python}
 
+```{python}
+crosswalk = pd.DataFrame(columns=['type', 'subtype', 'updated_type', 'updated_subtype', 'updated_subsubtype'])
+print(crosswalk)
 ```
 
-b. Let each row of this DataFrame be a unique combination of type and subtype. Then, based on the hierarchy you proposed in Q3, fill in updated_type, updated_subtype, and updated_subsubtype accordingly. Remember to name the
-NA subtypes as “Unclassified”. Hint: your crosswalk should have 32 observations.
+b. Let each row of this DataFrame be a unique combination of type and subtype. Then, based on the hierarchy you proposed in Q3, fill in updated_type, updated_subtype, and updated_subsubtype accordingly. Remember to name the NA subtypes as “Unclassified”. Hint: your crosswalk should have 32 observations.
 
 ```{python}
+clean_crosswalk = full_waze_data.groupby('type')['subtype'].unique().reset_index()
 
+exploded_rows = []
+for _, row in clean_crosswalk.iterrows():
+    type_value = row['type']
+    subtypes = row['subtype']
+    for subtype in subtypes:
+        cleaned_subtype = clean_subtypes({'type': type_value, 'subtype': subtype})
+        exploded_rows.append({
+            'type': type_value,
+            'subtype': subtype,
+            'updated_subtype': cleaned_subtype
+        })
+
+crosswalk = pd.DataFrame(exploded_rows)
+crosswalk['updated_type'] = crosswalk['type']
+crosswalk['subtype'] = crosswalk['subtype'].fillna('UNCLASSIFIED')
+crosswalk['updated_subsubtype'] = None
+
+def clean_subtypes(row):
+    subtype = row['subtype']
+    if pd.isna(subtype):
+        return 'UNCLASSIFIED'
+    if row['type'] == 'HAZARD':
+        if 'weather' in subtype.lower():
+            return 'WEATHER'
+        elif 'on_road' in subtype.lower():
+            return 'ON ROAD'
+        else:
+            return 'UNCLASSIIFIED'
+    return None
+
+crosswalk['updated_subsubtype'] = crosswalk.apply(clean_subtypes, axis=1)
+print(crosswalk)
 ```
 
 c. Merge the crosswalk with the original data using type and subtype. How many rows are there for Accident - Unclassified?
-
-```{python}
-
-```
 
 d. EXTRA CREDIT/OPTIONAL: After merging the crosswalk,can you check that the crosswalk and the new merged dataset have the same values in type and subtype?
 
 ```{python}
 
+print(crosswalk.head)
+
+```
+
+```{python}
+full_waze_data['subtype'] = full_waze_data['subtype'].fillna('UNCLASSIFIED')
+
+for index, full_row in full_waze_data.iterrows():
+    matching_row = crosswalk[(crosswalk['type'] == full_row['type']) & (crosswalk['subtype'] == full_row['subtype'])]
+    
+    if not matching_row.empty:
+        updated_row = update_subtypes(matching_row.iloc[0])  
+        full_waze_data.at[index, 'updated_type'] = updated_row['updated_type']
+        full_waze_data.at[index, 'updated_subtype'] = updated_row['updated_subtype']
+        full_waze_data.at[index, 'updated_subsubtype'] = updated_row['updated_subsubtype']
+    else:
+        full_waze_data.at[index, 'updated_type'] = full_row['type']
+        full_waze_data.at[index, 'updated_subtype'] = 'unclassified'
+        full_waze_data.at[index, 'updated_subsubtype'] = 'unclassified'
+
+print(full_waze_data)
 ```
 
 
