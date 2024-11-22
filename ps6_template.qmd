@@ -146,10 +146,6 @@ for _, row in clean_crosswalk.iterrows():
         print(f"  - {cleaned_subtype}")
 ```
 
-```{python}
-print(clean_crosswalk)
-```
-
 c. Finally, do you consider that we should keep the NA subtypes Why? If you choose to keep the NA subtypes, code them as “Unclassified.”
 
 We should keep the NA subtypes. In real life, events can happen that are not easily classified into premade categories. Or we have labeling issues from person to person on how to categorize things, so subtype is left blank. It is a good idea to have an unclassified subtype in such cases. The subtype UNCLASSIFIED has been included in the function in the above code chunk.
@@ -204,33 +200,17 @@ print(crosswalk)
 
 c. Merge the crosswalk with the original data using type and subtype. How many rows are there for Accident - Unclassified?
 
-d. EXTRA CREDIT/OPTIONAL: After merging the crosswalk,can you check that the crosswalk and the new merged dataset have the same values in type and subtype?
-
-```{python}
-
-print(crosswalk.head)
-
-```
+There are 24,359 rows for Accident - Unclassified in the merged dataframe.
 
 ```{python}
 full_waze_data['subtype'] = full_waze_data['subtype'].fillna('UNCLASSIFIED')
 
-for index, full_row in full_waze_data.iterrows():
-    matching_row = crosswalk[(crosswalk['type'] == full_row['type']) & (crosswalk['subtype'] == full_row['subtype'])]
-    
-    if not matching_row.empty:
-        updated_row = update_subtypes(matching_row.iloc[0])  
-        full_waze_data.at[index, 'updated_type'] = updated_row['updated_type']
-        full_waze_data.at[index, 'updated_subtype'] = updated_row['updated_subtype']
-        full_waze_data.at[index, 'updated_subsubtype'] = updated_row['updated_subsubtype']
-    else:
-        full_waze_data.at[index, 'updated_type'] = full_row['type']
-        full_waze_data.at[index, 'updated_subtype'] = 'unclassified'
-        full_waze_data.at[index, 'updated_subsubtype'] = 'unclassified'
-
-print(full_waze_data)
+merged_waze = pd.merge(crosswalk, full_waze_data, how='right', on=['type', 'subtype'])
 ```
 
+```{python}
+print(len(merged_waze[(merged_waze['type'] == 'ACCIDENT') & (merged_waze['subtype'] == 'UNCLASSIFIED')]))
+```
 
 # App #1: Top Location by Alert Type Dashboard (30 points){-}
 We will first make a spatial dashboard that displays the top 10 locations in Chicago with the highest number of alerts of a chosen type and subtype. Follow the lecture notes on how to create a Basic Shiny app and create it in a new folder called top_alerts_map (Note: remember to choose “No” when prompted to choose if you would like to use Shiny Express). Remember to use reactive decorators (e.g., @reactive_calc) to avoid unnecessary recalculations.
