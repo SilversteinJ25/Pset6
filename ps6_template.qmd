@@ -256,7 +256,20 @@ print(top_alerts_map.sort_values(by='Alert_Count', ascending=False).head(10))
 2. Using altair, plot a scatter plot where the x-axis is latitude and y-axis is longitude, and the points represent the latitude-longitude bins with the 10 highest number of “Jam- Heavy Traﬀic” alerts. Encode the size of the mark to represent the number of alerts. Hint: for a better presentation of the plot, you should set the domain of the x and y axis to be between some minimum and maximum values for the latitude and longitude.
 
 ```{python}
+top_jam_alerts = top_alerts_map[(top_alerts_map['updated_type'] == 'JAM') & (top_alerts_map['updated_subtype'] == 'HEAVY TRAFFIC')]
 
+chart = alt.Chart(top_jam_alerts).mark_circle(size=200).encode(
+    x=alt.X('Latitude:Q', scale=alt.Scale(domain=[42, 43])),  
+    y=alt.Y('Longitude:Q', scale=alt.Scale(domain=[-88, -87])),
+    size='Alert_Count:Q', 
+    tooltip=['Latitude', 'Longitude', 'Alert_Count']  #
+).properties(
+    title='Top Jam Alerts (Heavy Traffic)',
+    width=300,  # Set the width of the chart
+    height=200  
+)
+
+chart.show()
 ```
 
 3. Next, we will layer the scatter plot on top of a map of Chicago.
