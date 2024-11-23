@@ -48,6 +48,7 @@ from datetime import date
 import numpy as np
 alt.data_transformers.disable_max_rows() 
 from shiny import App, render, ui
+import re 
 
 import json
 ```
@@ -222,20 +223,34 @@ a. The geo variable holds coordinates data, but they are stored in a string that
 Hint: you will have to use regular expressions or regex to extract your text. You can look at the tutorial on regex here (here (link)) or prompt ChatGPT to put together a regular expression that extracts the coordinates. If you use ChatGPT, copy your prompt ChatGPT’s response below.
 
 ```{python}
+pattern = r"POINT\((-?\d+\.\d+) (-?\d+\.\d+)\)" 
 
+merged_waze[['Latitude', 'Longitude']] = merged_waze['geo'].str.extract(pattern)
+
+merged_waze['Latitude'] = merged_waze['Latitude'].astype(float)
+merged_waze['Longitude'] = merged_waze['Longitude'].astype(float)
+
+print(merged_waze)
 ```
 
 b. Bin the latitude and longitude variables into bins of step size 0.01. That is, coordinats with values of (-41.9232, -87.4251) should become (-41.92, -87.43). Which binned latitude-longitude combination has the greatest number of observations in the overall dataset?
 
 ```{python}
+merged_waze['Latitude'] = (merged_waze['Latitude'] / 0.01).round() * 0.01
+merged_waze['Longitude'] = (merged_waze['Longitude'] / 0.01).round() * 0.01
 
+print(merged_waze[['Latitude', 'Longitude']])
 ```
 
 
 c. Collapse the data down to the level of aggregation needed to plot the top 10 latitude-longitude bins with the highest number of alerts for a chosen type and subtype (Note: no sub-subtype). Save DataFrame as top_alerts_map.csv file in the top_alerts_map folder you created. What is the level of aggregation in this case? How many rows does this DataFrame have?
 
 ```{python}
+top_alerts_map = merged_waze.groupby(['Latitude', 'Longitude', 'updated_type', 'updated_subtype']).size().reset_index(name='Alert_Count')
 
+top_alerts = top_alerts_map.sort_values(by='Alert_Count').head(10)
+
+print(top_alerts_map.sort_values(by='Alert_Count', ascending=False).head(10))
 ```
 
 2. Using altair, plot a scatter plot where the x-axis is latitude and y-axis is longitude, and the points represent the latitude-longitude bins with the 10 highest number of “Jam- Heavy Traﬀic” alerts. Encode the size of the mark to represent the number of alerts. Hint: for a better presentation of the plot, you should set the domain of the x and y axis to be between some minimum and maximum values for the latitude and longitude.
