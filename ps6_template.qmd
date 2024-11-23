@@ -333,65 +333,68 @@ e. Can you suggest adding another column to the dashboard to enhance our analysi
 
 # App #2: Top Location by Alert Type and Hour Dashboard (20 points) {-}
 
-1. 
+1. We will now create a new App folder called top_alerts_map_byhour. This new app will modify your first app to add a slider to topalerts_map that lets users pick an hour of the day, and show the top 10 locations at that time of day. But, again, we will first work on the data outside of Shiny before we make the app.
 
-a. 
+a. Take a look at the whole dataset we are working with. Given the information present in the ts column, would you think that it would be a good idea to collapse the dataset by this column? Why or why not?
 
 
     
-b. 
+b. Create a new variable called hour that extracts the hour from the ts column (i.e. if the timestamp is 2024-01-01 01:34:32, the hour column should be 01:00). Then, generate a new collapsed dataset that has the required columns for us to plot the top 10 locations by hour, type and subtype (i.e. we want to add a new level of aggregation). How many rows does this dataset have? Beware that this might take some time to run. Save this collapsed dataset as top_alerts_map_byhour.csv in the top_alerts_map_byhour folder.
+
 ```{python}
 
 ```
 
-c.
+c.Generate an individual plot of the top 10 locations by hour for ‘Jam - Heavy Traﬀic’ for three different times within a day. Don’t forget to use the map layer you created while working for the first app and use the same longitude and latitude ranges.
 
 ```{python}
 
 ```
     
 
-2.
+2. We will now turn into creating the Shiny app. As mentioned, for this app we will have a single dropdown menu (similar to the one from App 1) and add a slider to pick the hour. Remember to not use the whole dataset for this app, but the collapsed dataset you created in the previous part.
 
-a. 
-
-
-
-b. 
+a. Create the UI for the app, which should have the dropdown menu to choose a combination of type and subtype, and a slider to pick the hour. Insert a screenshot of the UI below.
 
 
-c. 
+
+b. Recreate the “Jam - Heavy Traﬀic” plot from above by using the dropdown menu and slider and insert a screenshot of each plot below.
+
+
+c. Use your dashboard to answer the following question: does it seem like road construction is done more during morning hours or night hours? No need to insert more than two screenshots of the dashboard to support your answer.
 
 
 # App #3: Top Location by Alert Type and Hour Dashboard (20 points){-}
 
-1. 
+1. As choosing a single hour might not the best way to look at this data, we will now create a new app that builds upon App 2. For this app, we will add a component that allows the user to pick a range of hours. For this new app, create a new folder called top_alerts_map_byhour_sliderrange. We will modify the app from the previous part to allow the user to go from a slider to a slider range – that is, it will allow the user to pick a range of hours like 6AM-10AM, rather than a single hour.
 
 
-a. 
+a. Think about what we did in App 1 and 2 regarding collapsing our dataset to make it easier for the Shiny app to handle the data. Given our goal of plotting the top 10 locations by alert type and range of hours, would it be a good idea to collapse the dataset by range of hours? Why or why not?
 
-b. 
+b. Before going into the Shiny app, create a plot of the top 10 locations by alert type and range of hours for Jam - Heavy Traﬀic between 6AM and 9AM.
 
 ```{python}
 
 ```
 
-2. 
+2. We will now create our new Shiny app adding the slider for the range of hours.
 
-a. 
+a. Create the required UI for the App, which should have the dropdown menu to choose a combination of type and subtype, and a slider to pick the hour range. Insert a screenshot of the UI below and the plot.
 
 
-b. 
+b. Recreate the “Jam - Heavy Traﬀic” plot from above by using the dropdown menu and slider range. Insert a screenshot of your App below
     
-3. 
+3. We will now add a conditional panel to the app to allow the user to toggle between the choice between a slide for a single hour or a slider for a range of hours. For this, we will use a switch button component.
 
-a. 
+a. Read the documentation on switch buttons and then add the switch button with the label “Toggle to switch to range of hours” to the app. Insert a screenshot of your App with the addition of the switch button (it doesn’t need to be functional yet) and answer the following question: what are the possible values (understood as the possible values for input.switch_button if the switch button is named switch_button) for this switch button?
     
 
-b. 
+b. Modify the UI to add a conditional panel that shows a slider for a single hour when the switch button is toggled. Insert two screenshots of your App with the addition of the conditional panel, demonstrating that when the switch button is toggled, the slider for a single hour is shown and when it is not toggled, the slider for a range
+of hours is shown.
 
 
-c. 
+c. Lastly, modify the UI and server logic to add the functionality to the App so that when the switch button is toggled, the plot we show is the corresponding one according to our choice between hours (single hour or range of hours). Insert two screenshots showing this functionality: a plot generated with the slider for a single
+hour and a plot generated with the slider for a range of hours using the conditional panel functionality.
 
 
-d.
+d. EXTRA CREDIT: No need to code this part. What kind of changes would you make to the app in order for you to achieve a plot similar to the one below?
