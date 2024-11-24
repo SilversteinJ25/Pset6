@@ -225,7 +225,7 @@ Hint: you will have to use regular expressions or regex to extract your text. Yo
 ```{python}
 pattern = r"POINT\((-?\d+\.\d+) (-?\d+\.\d+)\)" 
 
-merged_waze[['Latitude', 'Longitude']] = merged_waze['geo'].str.extract(pattern)
+merged_waze[['Longitude', 'Latitude']] = merged_waze['geo'].str.extract(pattern)
 
 merged_waze['Latitude'] = merged_waze['Latitude'].astype(float)
 merged_waze['Longitude'] = merged_waze['Longitude'].astype(float)
@@ -235,15 +235,19 @@ print(merged_waze)
 
 b. Bin the latitude and longitude variables into bins of step size 0.01. That is, coordinats with values of (-41.9232, -87.4251) should become (-41.92, -87.43). Which binned latitude-longitude combination has the greatest number of observations in the overall dataset?
 
+Binned location -87.65 41.88 with 21,325 oberservationshas the greatest number of observations in the overall dataset.
+
 ```{python}
 merged_waze['Latitude'] = (merged_waze['Latitude'] / 0.01).round() * 0.01
 merged_waze['Longitude'] = (merged_waze['Longitude'] / 0.01).round() * 0.01
 
-print(merged_waze[['Latitude', 'Longitude']])
+print(f"Latitude: {merged_waze.groupby(['Latitude', 'Longitude']).size().idxmax()[0]}, Longitude: {merged_waze.groupby(['Latitude', 'Longitude']).size().idxmax()[1]}")
+print(f"Number of observations: {merged_waze.groupby(['Latitude', 'Longitude']).size().max()}")
 ```
 
-
 c. Collapse the data down to the level of aggregation needed to plot the top 10 latitude-longitude bins with the highest number of alerts for a chosen type and subtype (Note: no sub-subtype). Save DataFrame as top_alerts_map.csv file in the top_alerts_map folder you created. What is the level of aggregation in this case? How many rows does this DataFrame have?
+
+The dataframe has 11,060 rows, the level of aggregation is the binned latitude and longitude combinationss.
 
 ```{python}
 top_alerts_map = merged_waze.groupby(['Latitude', 'Longitude', 'updated_type', 'updated_subtype']).size().reset_index(name='Alert_Count')
@@ -251,48 +255,57 @@ top_alerts_map = merged_waze.groupby(['Latitude', 'Longitude', 'updated_type', '
 top_alerts = top_alerts_map.sort_values(by='Alert_Count').head(10)
 
 print(top_alerts_map.sort_values(by='Alert_Count', ascending=False).head(10))
+print('total:',len(top_alerts_map))
+top_alerts_map.to_csv('/Users/justinesilverstein/Desktop/Pset6/top_alerts_map.csv', index=False)
 ```
 
 2. Using altair, plot a scatter plot where the x-axis is latitude and y-axis is longitude, and the points represent the latitude-longitude bins with the 10 highest number of “Jam- Heavy Traﬀic” alerts. Encode the size of the mark to represent the number of alerts. Hint: for a better presentation of the plot, you should set the domain of the x and y axis to be between some minimum and maximum values for the latitude and longitude.
 
 ```{python}
 top_jam_alerts = top_alerts_map[(top_alerts_map['updated_type'] == 'JAM') & (top_alerts_map['updated_subtype'] == 'HEAVY TRAFFIC')]
+top_jam_alerts= top_jam_alerts.sort_values(by='Alert_Count', ascending=False).head(10)
+print(top_jam_alerts)
+```
 
-chart = alt.Chart(top_jam_alerts).mark_circle(size=200).encode(
-    x=alt.X('Latitude:Q', scale=alt.Scale(domain=[42, 43])),  
-    y=alt.Y('Longitude:Q', scale=alt.Scale(domain=[-88, -87])),
+```{python}
+jam_scatter_plot = alt.Chart(top_jam_alerts).mark_circle(size=100).encode(
+    x=alt.X('Longitude:Q', scale=alt.Scale(domain=[top_jam_alerts['Longitude'].min(), top_jam_alerts['Longitude'].max()]), title='Longitude'),  # Longitude should be on the x-axis
+    y=alt.Y('Latitude:Q', scale=alt.Scale(domain=[top_jam_alerts['Latitude'].min(), top_jam_alerts['Latitude'].max()]), title='Latitude'),  # Latitude should be on the y-axis
     size='Alert_Count:Q', 
-    tooltip=['Latitude', 'Longitude', 'Alert_Count']  #
+    tooltip=['Longitude', 'Latitude', 'Alert_Count']  
 ).properties(
-    title='Top Jam Alerts (Heavy Traffic)',
-    width=300,  # Set the width of the chart
-    height=200  
+    title='Top 10 Heavy Traffic Jam Alerts'
 )
-
-chart.show()
+jam_scatter_plot.show()
 ```
 
 3. Next, we will layer the scatter plot on top of a map of Chicago.
     
-a. Download the neighborhood boundaries as a GeoJSON from the Chicago Data Portal (link). EXTRA CREDIT: can you download the file directly with Python using the requests package?
-
-```{python}
-
-```
-    
+a. Download the neighborhood boundaries as a GeoJSON from the Chicago Data Portal (link). 
 
 b. Load it into Python using the json package and prepare it for Altair using the following code:
 
 ```{python}
-# MODIFY ACCORDINGLY
-file_path = "./top_alerts_map/chicago-boundaries.geojson"
-#----
+file_path = '/Users/justinesilverstein/Desktop/Pset6/Boundaries - Neighborhoods.geojson'
 
 with open(file_path) as f:
     chicago_geojson = json.load(f)
 
-geo_data = alt.Data(values=chicago_geojson["features"])
+chicago_map = alt.Data(values=chicago_geojson['features'])
+```
 
+```{python}
+chicago_map_chart = alt.Chart(chicago_map).mark_geoshape().encode(
+    color='properties.name:N', 
+    tooltip='properties.name:N'  
+).properties(
+    title='Neighborhood Boundaries in Chicago',
+    width=600,  
+    height=400
+).project(
+    type='mercator'  
+)
+chicago_map_chart.show()
 ```
 
 For now on, follow the Altair documentation Altair geographic plots documentation (link) to plot geo_data in Altair. NOTE: Be particularly careful with your choice of the projection (project method) of the map. If you are having trouble with the map showing up correctly, you can try to use the equirectangular projection.
@@ -300,7 +313,13 @@ For now on, follow the Altair documentation Altair geographic plots documentatio
 4. Layer the scatter plot from step 2 on top of a plot of the map using the information you loaded in step 3 and geo_data. Adjust the x and y axis domains so that the two layer correctly on top of each other. You may need to change the layering order of the map and the scatter plot or make the map fill transparent in order to properly see both plots.
 
 ```{python}
+combined_chart = chicago_map_chart + jam_scatter_plot
 
+combined_chart.configure_view(
+    stroke=None  
+).properties(
+    title="Top Jam Alerts (Heavy Traffic) in Chicago"
+).show()
 ```
 
 5. Now, we are ready to make our data and plot into the Shiny dashboard. In particular, we’re going to make a dashboard that lets users select in a single dropdown menu which combination of type and subtype they want to display. Once the user has made their selection, the app will show the 10 locations with the highest counts of those alerts.
@@ -308,6 +327,11 @@ For now on, follow the Altair documentation Altair geographic plots documentatio
 a. For the UI component, create a single dropdown menu for type and subtype. Insert a screenshot of the dropdown menu below. How many total type x subtype combinations are there in your dropdown menu?
 
 ```{python}
+top_alerts_map['type_subtype'] = top_alerts_map['updated_type'] + " - " + top_alerts_map['updated_subtype']
+
+type_subtype_combinations = top_alerts_map['type_subtype'].unique()
+print(f"Total type x subtype combinations: {len(type_subtype_combinations)}")
+print(type_subtype_combinations)
 
 ```
 
@@ -371,6 +395,8 @@ c. Use your dashboard to answer the following question: does it seem like road c
 
 a. Think about what we did in App 1 and 2 regarding collapsing our dataset to make it easier for the Shiny app to handle the data. Given our goal of plotting the top 10 locations by alert type and range of hours, would it be a good idea to collapse the dataset by range of hours? Why or why not?
 
+It would be a good idea because it would make the dashboard more user friendly and easier to understand the data. While some nuance in patterns may be lost ass well as precision due to it being by the hour and not minute, it would still show a pattern that is close to the overall data.
+
 b. Before going into the Shiny app, create a plot of the top 10 locations by alert type and range of hours for Jam - Heavy Traﬀic between 6AM and 9AM.
 
 ```{python}
@@ -393,8 +419,9 @@ b. Modify the UI to add a conditional panel that shows a slider for a single hou
 of hours is shown.
 
 
-c. Lastly, modify the UI and server logic to add the functionality to the App so that when the switch button is toggled, the plot we show is the corresponding one according to our choice between hours (single hour or range of hours). Insert two screenshots showing this functionality: a plot generated with the slider for a single
-hour and a plot generated with the slider for a range of hours using the conditional panel functionality.
+c. Lastly, modify the UI and server logic to add the functionality to the App so that when the switch button is toggled, the plot we show is the corresponding one according to our choice between hours (single hour or range of hours). Insert two screenshots showing this functionality: a plot generated with the slider for a single hour and a plot generated with the slider for a range of hours using the conditional panel functionality.
 
 
 d. EXTRA CREDIT: No need to code this part. What kind of changes would you make to the app in order for you to achieve a plot similar to the one below?
+
+I would include what year this is from and more tools that could allow a user to see different alerts over time. Alerts across the city alone are good but tell us little without further comparisons. As well as tools that could allow a user to narrow in on specific parts of the city to make cross city comparisons. Furthermore, it would be a good idea to allow people to change the colors of and data points to allow for better visualization.
